@@ -11,23 +11,44 @@ Scrivi la funzione getChefBirthday(id), che deve:
 - Utilizzare await per chiamare le API.
 - Restituire una Promise con la data di nascita dello chef.
 - Gestire gli errori con try/catch
+
+🎯 Bonus 1
+Attualmente, se la prima richiesta non trova una ricetta, la seconda richiesta potrebbe comunque essere eseguita causando errori a cascata.
+Modifica getChefBirthday(id) per intercettare eventuali errori prima di fare la seconda richiesta.
+
+🎯 Bonus 2
+Utilizza la libreria dayjs per formattare la data di nascita nel formato giorno/mese/anno.
 */
 
 
 async function getChefBirthday(id) {
+    let recipe;
     try {
         const response = await fetch(`https://dummyjson.com/recipes/${id}`);
-        const recipe = await response.json();
-
-        const userResponse = await fetch(`https://dummyjson.com/users/${recipe.userId}`);
-        const user = await userResponse.json();
-
-        return user.birthDate;
-
+        recipe = await response.json();
     } catch (error) {
         console.error(error);
-        throw error;
+        throw new Error(`impossibile trovare la ricetta con id ${id}`);
     }
+
+    if (recipe.message) {
+        throw new Error(`impossibile recuperare la ricetta con id ${id}`);
+    }
+
+    let user;
+    try {
+        const userResponse = await fetch(`https://dummyjson.com/users/${recipe.userId}`);
+        user = await userResponse.json();
+    } catch (error) {
+        console.error(error);
+        throw new Error(`impossibile trovare lo chef con id ${id}`);
+    }
+
+    if (user.message) {
+        throw new Error(`impossibile trovare lo chef con id ${id}`)
+    }
+
+    return user.birthDate;
 }
 
 (async () => {
